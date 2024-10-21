@@ -1,0 +1,220 @@
+BCT---------
+
+bct stock - 
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract ProductInventory {
+    
+    struct Product {
+        string name;
+        uint quantity;
+    }
+
+    mapping(uint => Product) public products;
+    uint public productCount;
+
+    // Function to receive products
+    function receiveProduct(string memory _name, uint _quantity) public {
+        productCount++;
+        products[productCount] = Product(_name, _quantity);
+    }
+
+    // Function to sell products
+    function sellProduct(uint _id, uint _quantity) public {
+        require(_id > 0 && _id <= productCount, "Invalid Product ID");
+        require(products[_id].quantity >= _quantity, "Not enough stock");
+        products[_id].quantity -= _quantity;
+    }
+
+    // Function to display stock
+    function displayStock(uint _id) public view returns (string memory, uint) {
+        require(_id > 0 && _id <= productCount, "Invalid Product ID");
+        return (products[_id].name, products[_id].quantity);
+    }
+}
+----------------------------------------------------------------------------------------------------
+
+bct student - 
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract StudentRegistry {
+    // Define a structure to store student data
+    struct Student {
+        string name;
+        uint256 age;
+        uint256 rollNumber;
+    }
+
+    // Array to store the students
+    Student[] private students;
+
+    // Event to log when a new student is added
+    event StudentAdded(string name, uint256 age, uint256 rollNumber);
+
+    // Fallback function to handle incoming ether transfers
+    event ReceivedEther(address indexed sender, uint256 value);
+
+    fallback() external payable {
+        // Fallback function triggered for non-existent function calls and ether transfers
+        emit ReceivedEther(msg.sender, msg.value);
+    }
+
+    // Add a new student to the array
+    function addStudent(string memory name, uint256 age, uint256 rollNumber) public {
+        students.push(Student(name, age, rollNumber));
+        emit StudentAdded(name, age, rollNumber); // Log event when student is added
+    }
+
+    // Retrieve a student’s details by index
+    function getStudent(uint256 index) public view returns (string memory, uint256, uint256) {
+        require(index < students.length, "Student not found");
+        return (students[index].name, students[index].age, students[index].rollNumber);
+    }
+
+    // Get the total number of students
+    function getStudentCount() public view returns (uint256) {
+        return students.length;
+    }
+
+    // Function to receive Ether
+    receive() external payable {
+        emit ReceivedEther(msg.sender, msg.value);
+    }
+}
+--------------------------------------------------------------------------------------------------------------
+bct bank - 
+// SPDX-License-Identifier: Unlicensed
+pragma solidity ^0.6.0;
+
+contract MyBank
+{
+    mapping(address=> uint ) private _balances;
+    address public owner;
+    event LogDepositeMade(address accountHoder, uint amount );
+
+    constructor () public
+     {
+         owner=msg.sender;
+         emit LogDepositeMade(msg.sender, 1000);
+     }
+
+        function deposite() public payable  returns (uint)
+        {
+            
+        require ((_balances[msg.sender] + msg.value) >  _balances[msg.sender] && msg.sender!=address(0));
+        _balances[msg.sender] += msg.value;
+        emit LogDepositeMade(msg.sender , msg.value);
+        return _balances[msg.sender];
+        } 
+
+        function withdraw (uint withdrawAmount) public  returns (uint)
+        {
+
+                require (_balances[msg.sender] >= withdrawAmount);
+                require(msg.sender!=address(0));
+                require (_balances[msg.sender] > 0);
+                _balances[msg.sender]-= withdrawAmount;
+                msg.sender.transfer(withdrawAmount);
+                emit LogDepositeMade(msg.sender , withdrawAmount);
+                return _balances[msg.sender];
+
+        }
+
+        function viewBalance() public view returns (uint)
+        {
+            return _balances[msg.sender];
+        }
+   
+}
+--------------------------------------------------------------------------------------------------------------
+
+bct customer - 
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract CustomerData {
+    
+    // Structure to hold customer data
+    struct Customer {
+        uint id;
+        string name;
+        string email;
+        uint balance;
+    }
+
+    // Array to store customers
+    Customer[] public customers;
+    uint public customerCount = 0;
+
+    // Function to add a new customer
+    function addCustomer(string memory _name, string memory _email, uint _balance) public {
+        customerCount++;
+        customers.push(Customer(customerCount, _name, _email, _balance));
+    }
+
+    // Function to retrieve customer data by ID
+    function getCustomer(uint _id) public view returns (uint, string memory, string memory, uint) {
+        require(_id > 0 && _id <= customerCount, "Customer ID is invalid");
+        Customer memory cust = customers[_id - 1]; // Array is 0-indexed
+        return (cust.id, cust.name, cust.email, cust.balance);
+    }
+
+    // Fallback function - reverts any call with invalid function
+    fallback() external payable {
+        revert("This contract does not accept direct payments");
+    }
+
+    // Receive function (optional, if you want to handle Ether)
+    receive() external payable {
+        // Logic to handle Ether (if required)
+    }
+}
+--------------------------------------------------------------------------------------------------------------
+
+bct employee - 
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract EmployeeData {
+    
+    // Structure to hold employee data
+    struct Employee {
+        uint id;
+        string name;
+        uint age;
+        string position;
+        uint salary;
+    }
+
+    // Array to hold list of employees
+    Employee[] public employees;
+    uint public employeeCount = 0;
+
+    // Function to add a new employee
+    function addEmployee(string memory _name, uint _age, string memory _position, uint _salary) public {
+        employeeCount++;
+        employees.push(Employee(employeeCount, _name, _age, _position, _salary));
+    }
+
+    // Function to retrieve an employee by ID
+    function getEmployee(uint _id) public view returns (uint, string memory, uint, string memory, uint) {
+        require(_id > 0 && _id <= employeeCount, "Invalid Employee ID");
+        Employee memory emp = employees[_id - 1];  // Array is 0-indexed
+        return (emp.id, emp.name, emp.age, emp.position, emp.salary);
+    }
+
+    // Fallback function
+    fallback() external payable {
+        revert("This contract does not accept direct payments");
+    }
+    
+    // Receive function (optional, if you want to receive Ether)
+    receive() external payable {
+        // If you want to accept Ether, you can implement this
+    }
+}
+
+--------------------------------------------------------------------------------------------------------------
