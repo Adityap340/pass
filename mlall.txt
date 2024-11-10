@@ -1,0 +1,467 @@
+ml 1st (uber) --
+
+from google.colab import files
+uploaded = files.upload()
+
+import pandas as pd
+
+# Load the dataset
+df = pd.read_csv('uber.csv')
+
+# Display the first few rows
+df
+
+
+# Check for missing values
+print(df.isnull().sum())
+
+# # Drop rows with missing values (or you can impute them)
+df = df.dropna()
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+sns.boxplot(x=df['fare_amount'])
+plt.show()
+
+sns.boxplot(x=df['passenger_count'])
+plt.show()
+
+Q1 = df['fare_amount'].quantile(0.25)
+Q3 = df['fare_amount'].quantile(0.75)
+IQR = Q3 - Q1
+
+df = df[~((df['fare_amount'] < (Q1 - 1.5 * IQR)) | (df['fare_amount'] > (Q3 + 1.5 * IQR)))]
+
+sns.boxplot(x=df['fare_amount'])
+plt.show()
+
+import numpy as np
+
+def haversine(lon1, lat1, lon2, lat2):
+    R = 6371  # Radius of the Earth in km
+    lon1, lon2 = np.radians(lon1), np.radians(lon2)
+    lat1, lat2 = np.radians(lat1), np.radians(lat2)
+
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+
+    a = np.sin(dlat/2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2) ** 2
+    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+
+    return R * c
+
+df['distance'] = haversine(df['pickup_longitude'], df['pickup_latitude'],
+                           df['dropoff_longitude'], df['dropoff_latitude'])
+
+
+df
+
+from sklearn.model_selection import train_test_split
+
+# Features
+X = df[['distance', 'passenger_count']]
+
+# Target
+y = df['fare_amount']
+
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Initialize the model
+lr = LinearRegression()
+
+# Train the model
+lr.fit(X_train, y_train)
+
+# Predict
+y_pred_lr = lr.predict(X_test)
+
+# Evaluate the model
+rmse_lr = np.sqrt(mean_squared_error(y_test, y_pred_lr))
+r2_lr = r2_score(y_test, y_pred_lr)
+
+print(f"Linear Regression - RMSE: {rmse_lr}, R2: {r2_lr}")
+
+from sklearn.ensemble import RandomForestRegressor
+
+# Initialize the model
+rf = RandomForestRegressor(n_estimators=100, random_state=42)
+
+# Train the model
+rf.fit(X_train, y_train)
+
+# Predict
+y_pred_rf = rf.predict(X_test)
+
+# Evaluate the model
+rmse_rf = np.sqrt(mean_squared_error(y_test, y_pred_rf))
+r2_rf = r2_score(y_test, y_pred_rf)
+
+print(f"Random Forest Regression - RMSE: {rmse_rf}, R2: {r2_rf}")
+
+print(f"Linear Regression - RMSE: {rmse_lr}, R2: {r2_lr}")
+print(f"Random Forest Regression - RMSE: {rmse_rf}, R2: {r2_rf}")
+
+mse_rf = np.mean((y_test - y_pred_rf) ** 2)
+print(f"MSE (Mean Squared Error for RANDOM FOREST REGRESSION): {mse_rf}")
+mae_rf = np.mean(np.abs(y_test - y_pred_rf))
+print(f"MAE (Mean Absolute Error RANDOM FOREST REGRESSION): {mae_rf}")
+
+
+mse_lr = mean_squared_error(y_test, y_pred_lr)
+print(f"MSE (Linear Regression): {mse_lr}")
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+
+
+mae_lr = mean_absolute_error(y_test, y_pred_lr)
+print(f"MAE (Linear Regression): {mae_lr}")
+
+--------------------------------------------------------------------------------------
+
+ml 2nd (emails) - 
+# Import required libraries
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, confusion_matrix, accuracy_score
+import numpy as np
+
+# Load the dataset (replace with the path to your dataset if needed)
+df = pd.read_csv('emails.csv')
+
+# Split the dataset into features and labels
+X = df.drop(columns=['Email No.', 'Prediction'])  # Features (drop non-relevant columns)
+y = df['Prediction']  # Labels (0 - Not Spam, 1 - Spam)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Standardize the feature set for both KNN and SVM
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+### K-NEAREST NEIGHBORS (KNN) ###
+
+# Ask the user to input the value of k
+k = int(input("Enter the value of k for K-Nearest Neighbors: "))
+
+# Initialize KNN classifier with the user-defined k value
+knn = KNeighborsClassifier(n_neighbors=k)
+
+# Train the KNN model
+knn.fit(X_train, y_train)
+
+# Predict using KNN
+y_pred_knn = knn.predict(X_test)
+
+# Evaluate the KNN model
+print("\nKNN Model Performance:")
+print("KNN Accuracy:", accuracy_score(y_test, y_pred_knn))
+print("KNN R²:", r2_score(y_test, y_pred_knn))
+print("KNN MSE:", mean_squared_error(y_test, y_pred_knn))
+print("KNN RMSE:", np.sqrt(mean_squared_error(y_test, y_pred_knn)))
+print("KNN MAE:", mean_absolute_error(y_test, y_pred_knn))
+print("KNN Confusion Matrix:\n", confusion_matrix(y_test, y_pred_knn))
+
+
+### SUPPORT VECTOR MACHINE (SVM) ###
+
+# Initialize SVM classifier
+svm = SVC(kernel='linear')
+
+# Train the SVM model
+svm.fit(X_train, y_train)
+
+# Predict using SVM
+y_pred_svm = svm.predict(X_test)
+
+# Evaluate the SVM model
+print("\nSVM Model Performance:")
+print("SVM Accuracy:", accuracy_score(y_test, y_pred_svm))
+print("SVM R²:", r2_score(y_test, y_pred_svm))
+print("SVM MSE:", mean_squared_error(y_test, y_pred_svm))
+print("SVM RMSE:", np.sqrt(mean_squared_error(y_test, y_pred_svm)))
+print("SVM MAE:", mean_absolute_error(y_test, y_pred_svm))
+print("SVM Confusion Matrix:\n", confusion_matrix(y_test, y_pred_svm))
+
+---------------------------------------------------------------------------------------------------------------
+
+ml 3 (churning) - 
+
+import pandas as pd
+import numpy as nprom sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler,
+LabelEncoder
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+import matplotlib.pyplot as plt
+
+------------------------------------------------------------------------
+!pip install seaborn
+
+import seaborn as sns
+------------------------------------------------------------------------
+from google.colab import files
+uploaded = files.upload()
+------------------------------------------------------------------------
+
+df = pd.read_csv('Churn_Modelling.csv.csv')
+
+df
+------------------------------------------------------------------------
+#step 2
+X = df.drop(['RowNumber', 'CustomerId', 'Surname', 'Exited'], axis=1)  # Remove unnecessary columns
+y = df['Exited']
+------------------------------------------------------------------------
+X
+
+y
+------------------------------------------------------------------------
+le_gender = LabelEncoder()
+X['Gender'] = le_gender.fit_transform(X['Gender'])
+
+le_geo = LabelEncoder()
+X['Geography'] = le_geo.fit_transform(X['Geography'])
+
+X
+------------------------------------------------------------------------
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+------------------------------------------------------------------------
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+------------------------------------------------------------------------
+
+model = Sequential()
+------------------------------------------------------------------------
+
+model.add(Dense(64, input_dim=X_train.shape[1], activation='relu'))  # Using ReLU activation
+# Hidden Layer
+model.add(Dense(32, activation='relu'))  # You can experiment with other activations here (sigmoid, tanh, etc.)
+# Output Layer
+model.add(Dense(1, activation='sigmoid'))  # Sigmoid for binary classification
+
+# Compile the model
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+# Train the model
+history = model.fit(X_train_scaled, y_train, epochs=30, batch_size=32, validation_data=(X_test_scaled, y_test))
+
+# Step 5: Evaluate the model and print accuracy score and confusion matrix
+y_pred = (model.predict(X_test_scaled) > 0.5).astype(int)
+------------------------------------------------------------------------
+
+# Accuracy score
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy * 100}%")
+
+# Confusion Matrix
+cm = confusion_matrix(y_test, y_pred)
+print("Confusion Matrix:")
+print(cm)
+
+------------------------------------------------------------------------
+model_tanh = Sequential()
+model_tanh.add(Dense(64, input_dim=X_train.shape[1], activation='tanh'))
+model_tanh.add(Dense(32, activation='tanh'))
+model_tanh.add(Dense(1, activation='sigmoid'))
+model_tanh.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+model_tanh.fit(X_train_scaled, y_train, epochs=20, batch_size=32, validation_data=(X_test_scaled, y_test))
+
+# Evaluating model with 'tanh'
+y_pred_tanh = (model_tanh.predict(X_test_scaled) > 0.5).astype(int)
+accuracy_tanh = accuracy_score(y_test, y_pred_tanh)
+print(f"Accuracy with Tanh activation: {accuracy_tanh * 100:.2f}%")
+
+------------------------------------------------------------------------
+model_sigmoid = Sequential()
+
+
+model_sigmoid.add(Dense(64, input_dim=X_train.shape[1], activation='sigmoid'))
+
+model_sigmoid.add(Dense(32, activation='sigmoid'))
+
+
+model_sigmoid.add(Dense(1, activation='sigmoid'))
+
+model_sigmoid.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+
+history_sigmoid = model_sigmoid.fit(X_train_scaled, y_train, epochs=20, batch_size=32, validation_data=(X_test_scaled, y_test))
+
+y_pred_sigmoid = (model_sigmoid.predict(X_test_scaled) > 0.5).astype(int)
+accuracy_sigmoid = accuracy_score(y_test, y_pred_sigmoid)
+
+print(f"Accuracy with Sigmoid in all layers: {accuracy_sigmoid * 100:.2f}%")
+print("Confusion Matrix with Sigmoid in all layers:")
+print(confusion_matrix(y_test, y_pred_sigmoid))
+
+
+-------------------------------------------------------------------------------------------------------------------
+
+ml 5 (diabetes) - 
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+from sklearn import preprocessing
+
+-------------------------------------------------
+from google.colab import files
+uploaded = files.upload()
+
+-------------------------------------------------
+
+## **Loading the Dataset**
+First we load the dataset and find out the number of columns, rows, NULL values, etc.
+
+df = pd.read_csv('diabetes.csv')
+
+
+
+df.info()
+
+df.head()
+-------------------------------------------------
+
+## **Cleaning**
+
+df.corr().style.background_gradient(cmap='BuGn')
+
+df.drop(['BloodPressure', 'SkinThickness'], axis=1, inplace=True)
+
+df.isna().sum()
+
+df.describe()
+-------------------------------------------------
+
+## **Visualization**
+
+hist = df.hist(figsize=(20,16))
+
+# **Separating the features and the labels**
+
+X=df.iloc[:, :df.shape[1]-1]       #Independent Variables
+y=df.iloc[:, -1]                   #Dependent Variable
+X.shape, y.shape
+
+# **Splitting the Dataset**
+Training and Test Set
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=8)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# **Machine Learning model**
+
+def knn(X_train, X_test, y_train, y_test, neighbors, power):
+    model = KNeighborsClassifier(n_neighbors=neighbors, p=power)
+    # Fit and predict on model
+    # Model is trained using the train set and predictions are made based on the test set. Accuracy scores are calculated for the model.
+    y_pred=model.fit(X_train, y_train).predict(X_test)
+    print(f"Accuracy for K-Nearest Neighbors model \t: {accuracy_score(y_test, y_pred)}")
+
+    cm = confusion_matrix(y_test, y_pred)
+    print(f'''Confusion matrix :\n
+    | Positive Prediction\t| Negative Prediction
+    ---------------+------------------------+----------------------
+    Positive Class | True Positive (TP) {cm[0, 0]}\t| False Negative (FN) {cm[0, 1]}
+    ---------------+------------------------+----------------------
+    Negative Class | False Positive (FP) {cm[1, 0]}\t| True Negative (TN) {cm[1, 1]}\n''')
+    cr = classification_report(y_test, y_pred)
+    print('Classification report : \n', cr)
+
+## **Hyperparameter tuning**
+
+param_grid = {
+    'n_neighbors': range(1, 51),
+    'p': range(1, 4)
+}
+grid = GridSearchCV(estimator=KNeighborsClassifier(), param_grid=param_grid, cv=5)
+grid.fit(X_train, y_train)
+grid.best_estimator_, grid.best_params_, grid.best_score_
+
+knn(X_train, X_test, y_train, y_test, grid.best_params_['n_neighbors'], grid.best_params_['p'])
+
+
+
+-----------------------------------------------------------------------------------------------------------------------
+
+ml 6 sales - 
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+import warnings
+from sklearn.preprocessing import StandardScaler
+warnings.filterwarnings('ignore')
+
+-----------------------------------------------------------
+from google.colab import files
+uploaded = files.upload()
+
+
+-----------------------------------------------------------
+df = pd.read_csv("sales_data_sample.csv", encoding="latin")
+
+df.head()
+
+df.info()
+
+-----------------------------------------------------------
+
+df = df[['ORDERLINENUMBER', 'SALES']]
+
+-----------------------------------------------------------
+scaler = StandardScaler()
+scaled_values = scaler.fit_transform(df.values)
+
+-----------------------------------------------------------
+wcss = []
+for i in range(1, 11):
+    model = KMeans(n_clusters=i, init='k-means++')
+    model.fit_predict(scaled_values)
+    wcss.append(model.inertia_)
+
+-----------------------------------------------------------
+plt.plot(range(1, 11), wcss, 'ro-')
+plt.show()
+
+-----------------------------------------------------------
+model = KMeans(n_clusters=7, init='k-means++')
+clusters = model.fit_predict(scaled_values)
+clusters
+
+-----------------------------------------------------------
+df['cluster'] = clusters
+
+df
+-----------------------------------------------------------
+model.inertia_
+-----------------------------------------------------------
+
+plt.scatter(df['ORDERLINENUMBER'], df['SALES'], c=df['cluster'])
+plt.show()
+-----------------------------------------------------------
+
+kmeans.cluster_centers_
+
+
+
+---------------------------------------------------------------------------------
+
