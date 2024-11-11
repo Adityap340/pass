@@ -1,43 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract MyBank {
-    mapping(address => uint) private _balances;
-    address public owner;
-    event LogDepositMade(address accountHolder, uint amount);
+contract SimpleBank {
+    // Mapping to store balances of each address
+    mapping(address => uint) private balances;
 
-    constructor() {
-        owner = msg.sender;
-        _balances[owner] = 1000; // Set an initial balance for the owner
-        emit LogDepositMade(msg.sender, 1000);
+    // Event to log deposits
+    event DepositMade(address indexed accountHolder, uint amount);
+
+    // Event to log withdrawals
+    event WithdrawalMade(address indexed accountHolder, uint amount);
+
+    // Deposit function to allow users to deposit Ether into their account
+    function deposit() public payable {
+        require(msg.value > 0, "Deposit amount must be greater than zero");
+
+        balances[msg.sender] += msg.value;
+        emit DepositMade(msg.sender, msg.value);
     }
 
-    // Deposit function to add Ether to the user's balance
-    function deposit() public payable returns (uint) {
-        require(msg.sender != address(0), "Invalid address");
-        require(
-            (_balances[msg.sender] + msg.value) > _balances[msg.sender],
-            "Deposit failed"
-        );
-        
-        _balances[msg.sender] += msg.value;
-        emit LogDepositMade(msg.sender, msg.value);
-        return _balances[msg.sender];
+    // Withdraw function to allow users to withdraw Ether from their account
+    function withdraw(uint withdrawAmount) public {
+        require(balances[msg.sender] >= withdrawAmount, "Insufficient balance");
+
+        balances[msg.sender] -= withdrawAmount;
+        payable(msg.sender).transfer(withdrawAmount);
+        emit WithdrawalMade(msg.sender, withdrawAmount);
     }
 
-    // Withdraw function to withdraw Ether from the user's balance
-    function withdraw(uint withdrawAmount) public returns (uint) {
-        require(_balances[msg.sender] >= withdrawAmount, "Insufficient balance");
-        require(msg.sender != address(0), "Invalid address");
-        
-        _balances[msg.sender] -= withdrawAmount;
-        payable(msg.sender).transfer(withdrawAmount); // Cast to payable
-        emit LogDepositMade(msg.sender, withdrawAmount);
-        return _balances[msg.sender];
-    }
-
-    // View function to check the balance of the caller
+    // Function to view the balance of the caller's account
     function viewBalance() public view returns (uint) {
-        return _balances[msg.sender];
+        return balances[msg.sender];
     }
 }
