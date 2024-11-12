@@ -1,57 +1,44 @@
 #include <iostream>
-#include <ctime> // For measuring time
 using namespace std;
 
-// Iterative Fibonacci
-int fib_iterative(int n) {
-    if (n <= 1) return n;
-    int a = 0, b = 1, c;
-    for (int i = 2; i <= n; i++) {
-        c = a + b;
-        a = b;
-        b = c;
+int fibonacci_recursive(int n, int& step_count) {
+    step_count++;  // Increment step count for each recursive call
+    if (n <= 1) {
+        return n;
+    }
+    return (fibonacci_recursive(n - 1, step_count) + fibonacci_recursive(n - 2, step_count));
+}
+
+int fibonacci_iterative(int n, int& step_count) {
+    step_count = 0;  // Initialize step count to zero for iterative
+    if (n <= 1) {
+        return n;
+    }
+    int a = 0, b = 1;
+    for (int i = 2; i <= n; i++) {  // Loop starts from 2 and goes up to n
+        step_count++;  // Increment step count for each loop iteration
+        int temp = b;
+        b = a + b;
+        a = temp;
     }
     return b;
 }
 
-// Recursive Fibonacci
-int fib_recursive(int n) {
-    if (n <= 1) return n;
-    return fib_recursive(n - 1) + fib_recursive(n - 2);
-}
-
 int main() {
-    int n;
-    cout << "Enter a number: ";
-    cin >> n;
+    int recursive_steps = 0;
+    int iterative_steps = 0;
 
-    // Measure time for iterative Fibonacci
-    clock_t start_iter = clock();
-    int result_iter = fib_iterative(n);
-    clock_t end_iter = clock();
-    double duration_iter = double(end_iter - start_iter) / CLOCKS_PER_SEC;
+    int n = 5;  // Fibonacci term to calculate
 
-    // Calculate space required for iterative approach
-    int space_iter = sizeof(n) + sizeof(int) * 3;  // n, a, b, c variables
+    // Calculate and print recursive Fibonacci result and step count
+    int recursive_result = fibonacci_recursive(n, recursive_steps);
+    cout << "Recursive Fibonacci(" << n << "): " << recursive_result 
+         << " (steps: " << recursive_steps << ")" << endl;
 
-    cout << "Iterative Fibonacci of " << n << " is: " << result_iter << endl;
-    cout << "Time required (iterative): " << duration_iter << " seconds" << endl;
-    cout << "Space required (iterative): " << space_iter << " bytes" << endl;
-
-    // Measure time for recursive Fibonacci
-    clock_t start_rec = clock();
-    int result_rec = fib_recursive(n);
-    clock_t end_rec = clock();
-    double duration_rec = double(end_rec - start_rec) / CLOCKS_PER_SEC;
-
-    // Calculate space required for recursive approach
-    // Recursion uses a stack frame for each call, with `sizeof(int)` for each level
-    int space_rec = sizeof(n) * (n > 1 ? n : 1);
-
-    cout << "Recursive Fibonacci of " << n << " is: " << result_rec << endl;
-    cout << "Time required (recursive): " << duration_rec << " seconds" << endl;
-    cout << "Space required (recursive): " << space_rec << " bytes" << endl;
+    // Calculate and print iterative Fibonacci result and step count
+    int iterative_result = fibonacci_iterative(n, iterative_steps);
+    cout << "Iterative Fibonacci(" << n << "): " << iterative_result 
+         << " (steps: " << iterative_steps << ")" << endl;
 
     return 0;
 }
-
